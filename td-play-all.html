@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Today's Date &mdash; the whole story</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Newsreader:ital,opsz@0,6..72;1,6..72&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#17121a;--ink:#f2ece2;--mut:#9a8fa0;--acc:#e8a24c;--line:rgba(255,235,200,.12);}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Newsreader',Georgia,serif;background:#0c0a0e;color:var(--ink);display:flex;align-items:center;justify-content:center;min-height:100%;overflow:hidden;}
+  #shell{position:relative;width:100%;max-width:540px;height:100dvh;max-height:920px;overflow:hidden;background:var(--bg);}
+  iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;z-index:1;background:#0c0a0e;}
+
+  /* chapter bar */
+  #bar{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;gap:10px;padding:10px 12px;
+    background:linear-gradient(180deg,rgba(12,10,14,.82),rgba(12,10,14,0));pointer-events:none;transition:opacity .5s;}
+  #bar.dim{opacity:0;}
+  #bar .num{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--acc);white-space:nowrap;}
+  #ticks{flex:1;display:flex;gap:3px;}
+  #ticks i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.16);}
+  #ticks i.done{background:var(--acc);}
+  #ticks i.now{background:var(--acc);opacity:.55;}
+  #exit{pointer-events:auto;cursor:pointer;font-family:'Space Mono',monospace;font-size:14px;color:var(--mut);text-decoration:none;padding:2px 6px;}
+
+  /* interstitial card between chapters */
+  #card{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:34px;background:var(--bg);opacity:0;pointer-events:none;transition:opacity .55s;}
+  #card.show{opacity:1;}
+  #card .k{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:4px;text-transform:uppercase;color:var(--acc);}
+  #card .n{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(40px,12vw,64px);line-height:1;margin-top:10px;}
+  #card .w{font-family:'Newsreader',serif;font-style:italic;font-size:17px;color:var(--mut);margin-top:10px;}
+
+  /* title / start */
+  #open{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:34px 26px;
+    background:radial-gradient(120% 60% at 50% 0%,rgba(232,162,76,.16),transparent 62%),var(--bg);}
+  #open.hide{display:none;}
+  .kick{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:4px;text-transform:uppercase;color:var(--acc);}
+  h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(38px,11vw,62px);line-height:.98;margin-top:12px;letter-spacing:-.02em;}
+  .sub{color:var(--mut);font-style:italic;font-size:16px;margin-top:14px;line-height:1.5;max-width:22em;}
+  .by{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-top:18px;}
+  .by b{color:var(--ink);font-weight:400;}
+  .go{margin-top:26px;font-family:'Space Mono',monospace;font-size:11.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;
+    padding:15px 30px;border-radius:10px;border:1px solid var(--acc);background:var(--acc);color:#1a1206;cursor:pointer;}
+  .go:active{transform:scale(.97);}
+  .small{margin-top:14px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);}
+  .small a{color:var(--mut);}
+
+  /* end */
+  #fin{position:absolute;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:34px;background:var(--bg);}
+  #fin.show{display:flex;}
+  #fin .n{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(30px,9vw,48px);}
+  #fin .w{font-style:italic;color:var(--mut);margin-top:12px;}
+  #fin .btns{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;justify-content:center;}
+  #fin a,#fin button{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;
+    padding:12px 20px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);cursor:pointer;}
+  @media (prefers-reduced-motion: reduce){#card{transition:none;}}
+</style>
+</head>
+<body>
+<div id="shell">
+  <iframe id="stagef" title="chapter" allow="autoplay"></iframe>
+
+  <div id="bar" class="dim">
+    <span class="num" id="numLbl">Ch 1 / 15</span>
+    <div id="ticks"></div>
+    <a id="exit" href="td-chapters.html" title="Chapters">&#10005;</a>
+  </div>
+
+  <div id="card">
+    <div class="k" id="cardK">Chapter 2</div>
+    <div class="n" id="cardN">Simone</div>
+    <div class="w" id="cardW"></div>
+  </div>
+
+  <div id="open">
+    <div class="kick">The whole story &middot; fifteen chapters</div>
+    <h1>Today&rsquo;s Date</h1>
+    <div class="sub">Told by five people and a dog, each of whom sees only their own piece of it. Sit back &mdash; it plays itself, start to finish.</div>
+    <div class="by">Written by <b>Lanre Ajayi</b></div>
+    <button class="go" id="goBtn">&#9656; Play all</button>
+    <div class="small">Tap the film to pause &middot; <a href="td-chapters.html">read chapter by chapter</a></div>
+  </div>
+
+  <div id="fin">
+    <div class="n">The End</div>
+    <div class="w">&ldquo;Date 3 has a lot to live up to.&rdquo;</div>
+    <div class="btns">
+      <button id="againBtn">&#8634; From the start</button>
+      <a href="td-chapters.html">Chapters</a>
+      <a href="index.html">Library</a>
+    </div>
+  </div>
+</div>
+<script>
+"use strict";
+const CH = [
+  {f:"todays-date.html",         who:"Jon"},
+  {f:"todays-date-simone.html",  who:"Simone"},
+  {f:"td-ch03-dave.html",        who:"Dave"},
+  {f:"td-ch04-gloria.html",      who:"Gloria"},
+  {f:"td-ch05-jon.html",         who:"Jon"},
+  {f:"td-ch06-simone.html",      who:"Simone"},
+  {f:"td-ch07-dave.html",        who:"Dave"},
+  {f:"td-ch08-jon.html",         who:"Jon"},
+  {f:"td-ch09-sandy.html",       who:"Sandy"},
+  {f:"td-ch10-gloria.html",      who:"Gloria"},
+  {f:"td-ch11-simone.html",      who:"Simone"},
+  {f:"td-ch12-jon.html",         who:"Jon"},
+  {f:"td-ch13-simone.html",      who:"Simone"},
+  {f:"td-ch14-jon.html",         who:"Jon"},
+  {f:"td-ch15-simone.html",      who:"Simone"}
+];
+const $=id=>document.getElementById(id);
+const frameEl=$('stagef'), bar=$('bar'), card=$('card'), ticks=$('ticks');
+let at=-1, guard=0, running=false;
+
+CH.forEach(()=>{const i=document.createElement('i');ticks.appendChild(i);});
+function paintTicks(){[...ticks.children].forEach((t,i)=>{t.className = i<at?'done':(i===at?'now':'');});}
+
+function showCard(i,then){
+  $('cardK').textContent='Chapter '+(i+1);
+  $('cardN').textContent=CH[i].who;
+  $('cardW').textContent = i===0 ? 'Where it begins.' : '';
+  card.classList.add('show');
+  setTimeout(()=>{ then(); setTimeout(()=>card.classList.remove('show'), 620); }, 1250);
+}
+function load(i){
+  at=i; paintTicks();
+  $('numLbl').textContent='Ch '+(i+1)+' / '+CH.length;
+  guard = Date.now();
+  frameEl.src = CH[i].f + '?auto=1';
+}
+function next(){
+  if(at>=CH.length-1){ finish(); return; }
+  const i=at+1;
+  showCard(i, ()=>load(i));
+}
+function finish(){ running=false; bar.classList.add('dim'); frameEl.src='about:blank'; $('fin').classList.add('show'); }
+function begin(){
+  $('open').classList.add('hide'); $('fin').classList.remove('show');
+  running=true; bar.classList.remove('dim');
+  showCard(0, ()=>load(0));
+}
+window.addEventListener('message',e=>{
+  if(!running || !e.data || e.data.td!=='ended') return;
+  // ignore anything arriving implausibly fast (a stale frame shouting on unload)
+  if(Date.now()-guard < 2500) return;
+  next();
+});
+$('goBtn').addEventListener('click',begin);
+$('againBtn').addEventListener('click',begin);
+// keep the chapter bar out of the way once you're reading
+let hideT=null;
+function nudge(){ bar.classList.remove('dim'); clearTimeout(hideT); hideT=setTimeout(()=>{ if(running) bar.classList.add('dim'); }, 2600); }
+document.addEventListener('pointerdown',()=>{ if(running) nudge(); });
+</script>
+</body>
+</html>

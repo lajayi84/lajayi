@@ -195,16 +195,16 @@ const SCENES=[
  {slug:['INT. LIVING ROOM','NIGHT'],set:'lr',p:{matt:'gun',russ:'stand',rip:1},bed:['drone'],sfx:'rip',
   text:[D("Matt","\u201cHe was a father to me. To the end.\u201d","matt"),D("Russ","\u201cMore than he was to his own flesh and blood.\u201d","russ"),
         N("Russ takes the doll in both hands and rips it in half. Throws the pieces at Matt\u2019s feet."),D("Matt","\u201cYou piece of shit.\u201d","matt")]},
- {slug:['INT. LIVING ROOM','NIGHT'],set:'lr',p:{matt:'gun',russ:'stand'},bed:['diesirae'],sfx:'horn',
+ {slug:['INT. LIVING ROOM','NIGHT'],set:'lr',p:{matt:'gun',russ:'stand'},bed:['dramatic'],sfx:'horn',
   text:[N("The phone flashes. A car horn outside. Russ lifts the phone \u2014 the gun follows him \u2014 and answers."),
         D("Russ","\u201c(into phone) Yeah, I heard the horn. Won\u2019t be needing the cab after all. My voice? Sore throat. Cheers.\u201d","russ"),
-        N("He drops it, and points the remote at the music system. Verdi\u2019s Dies Irae detonates into the room.")]},
- {slug:['INT. LIVING ROOM','NIGHT'],set:'lr',p:{fight:1},bed:['diesirae'],sfx:'fight',shake:2,
+        N("He drops it, and points the remote at the music system. Classical music detonates into the room \u2014 a dramatic soundtrack to what is occurring.")]},
+ {slug:['INT. LIVING ROOM','NIGHT'],set:'lr',p:{fight:1},bed:['dramatic'],sfx:'fight',shake:2,
   text:[D("Russ","\u201cYou used to be quicker than this.\u201d","russ"),
         N("Matt\u2019s focus snaps \u2014 Russ is closer. The gun goes wide, skitters across the floor. A wire round the knuckles. Blows traded \u2014"),
         N("Matt charges, shoves \u2014 Russ\u2019s head cracks against the desk. He goes down, and doesn\u2019t move.")]},
  {slug:['INT. LIVING ROOM','NIGHT'],set:'lr',p:{matt:'gun',russ:'down'},bed:['drone'],sfx:'siren',
-  text:[N("Dies Irae dies into a quieter passage. Matt levels the gun, edges closer. A line of blood at Russ\u2019s nostril. Nothing."),
+  text:[N("The music dies into a quieter passage. Matt levels the gun, edges closer. A line of blood at Russ\u2019s nostril. Nothing."),
         N("He lowers it. Picks up his phone with shaking hands."),D("Matt","\u201c(into phone) Where are you? Have you two finished. Get over here. Now. Please.\u201d","matt"),
         N("A siren, distant. Blue light rakes the glass. It fades \u2014 and becomes knocking.")]},
  {slug:['INT. LIVING ROOM','NIGHT'],set:'lr',p:{matt:'stand',suzy:'in',russ:'down'},bed:['drone'],
@@ -245,15 +245,15 @@ const SCENES=[
          D("Russ","\u201c(off) Ask nicely.\u201d","russ"),
          N("Matt lunges for the door. The central locking thuds shut. Russ turns \u2014 dried blood on his lip, a welt purpling at his temple. That smile."),
          D("Russ","\u201cThis is it.\u201d","russ")]},
-  {slug:['INT. TAXI CAB','NIGHT'],set:'taxi',p:{stage:'face',russ:1},bed:['diesirae'],
+  {slug:['INT. TAXI CAB','NIGHT'],set:'taxi',p:{stage:'face',russ:1},bed:['dramatic'],
    text:[D("Evie","\u201cIf I\u2019m right to be worried \u2014 please. Don\u2019t let your troubles be the end of you.\u201d","evie vo"),
          N("Russ lifts a hand. The wire dangles from it."),D("Russ","\u201cTime\u2019s up, Alden.\u201d","russ"),
          N("Matt laughs. Once. Involuntary. It throws Russ \u2014 just for a beat."),D("Matt","\u201cYes. It is.\u201d","matt"),
          N("His hand is already in the bag. On the gun.")]},
-  {slug:['INT. TAXI CAB','NIGHT'],set:'taxi',p:{stage:'face',russ:1},bed:['diesirae'],sfx:'sting',
+  {slug:['INT. TAXI CAB','NIGHT'],set:'taxi',p:{stage:'face',russ:1},bed:['dramatic'],sfx:'sting',
    text:[D("Matt","\u201cSo let me answer the question you haven\u2019t asked yet.\u201d","matt"),
          D("Evie","\u201cForever yours. Evie.\u201d","evie vo")]},
-  {slug:['EXT. OUTSIDE THE FLAT','NIGHT'],set:'ext',p:{suzy:'run',cab:'far'},bed:['diesirae'],sfx:'smash',
+  {slug:['EXT. OUTSIDE THE FLAT','NIGHT'],set:'ext',p:{suzy:'run',cab:'far'},bed:['dramatic'],sfx:'smash',
    text:[N("The dog barks in earnest. The front door flies open \u2014 the music swells into the night with Suzy as she sprints into the road."),
          N("Her head whips one way, then the other \u2014 and locks onto the only car with its headlights on. The cab. Fifty yards down. Engine running."),
          N("She steps off the kerb.")]},
@@ -297,7 +297,7 @@ function makeBed(kind){let timer=null,alive=true,nodes=null;
   function hiss(freq,amp){if(!AC)return;const s=AC.createBufferSource();s.buffer=nbuf(2);s.loop=true;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=freq;const g=AC.createGain();g.gain.value=muted?0:amp;s.connect(lp);lp.connect(g);g.connect(master);s.start();nodes={s,g};}
   function drn(cold){if(!AC)return;const o=AC.createOscillator();o.type='sawtooth';o.frequency.value=cold?49:55;const o2=AC.createOscillator();o2.type='sine';o2.frequency.value=cold?98:82;const g=AC.createGain();g.gain.value=0.0001;g.gain.linearRampToValueAtTime(muted?0.0001:0.07,now()+1.5);const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=220;o.connect(lp);o2.connect(lp);lp.connect(g);g.connect(master);o.start();o2.start();nodes={o,o2,g};}
   function tick(){const step=()=>{if(!alive)return;if(AC&&!muted){const t=now();const s=AC.createBufferSource();s.buffer=nbuf(0.02);const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=2600;bp.Q.value=3;const g=AC.createGain();g.gain.setValueAtTime(0.05,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.02);s.connect(bp);bp.connect(g);g.connect(master);s.start(t);s.stop(t+0.03);}timer=setTimeout(step,1000);};step();}
-  function diesirae(){ if(!AC)return; // pounding stabs over a choir-ish drone (evoking Verdi, not the recording)
+  function dramatic(){ if(!AC)return; // pounding stabs over a choir-ish drone — an original cue, no recording
     const o=AC.createOscillator();o.type='sawtooth';o.frequency.value=55;const og=AC.createGain();og.gain.value=muted?0:0.05;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=300;o.connect(lp);lp.connect(og);og.connect(master);o.start();nodes={o,g:og};
     const seq=[0,0,0,0, 0,0,0,0]; const notes=[110,110,110,98, 110,110,98,82]; let i=0;
     const step=()=>{ if(!alive)return; if(AC&&!muted){ const t=now(); const f=notes[i%notes.length]; thud(t,f,0.5); tone(f*2,t,0.18,0.06,'sawtooth'); } i++; timer=setTimeout(step,300); }; step(); }
@@ -305,7 +305,7 @@ function makeBed(kind){let timer=null,alive=true,nodes=null;
   else if(kind==='street'){hiss(500,0.025);}
   else if(kind==='unease'){drn(false);tick();}
   else if(kind==='drone'){drn(true);}
-  else if(kind==='diesirae'){diesirae();}
+  else if(kind==='dramatic'){dramatic();}
   return {stop(){alive=false;if(timer)clearTimeout(timer);if(nodes){try{nodes.g.gain.linearRampToValueAtTime(0.0001,now()+0.3);setTimeout(()=>{try{nodes.o&&nodes.o.stop();nodes.o2&&nodes.o2.stop();nodes.s&&nodes.s.stop();}catch(e){}},320);}catch(e){}}}};
 }
 const SFX={click:clickS,buzz:buzzS,knock3:()=>knock(3),knock5:()=>knock(5),creak:creakS,vox:voxS,coins:coinsS,sms:smsS,motorbike:motorbikeS,horn:hornS,flap:flapS,rip:ripS,fight:fightS,siren:sirenS,bolt:boltS,smash:smashS,sting:stingS,reveal:revealS,lock:lockS,peelaway:peelawayS};

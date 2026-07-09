@@ -51,11 +51,20 @@
   .chapnav a{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;padding:11px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:inherit;pointer-events:auto;}
   .chapnav a.pri{background:#5aa39c;color:#15120c;border-color:#5aa39c;font-weight:700;}
   .chaplabel{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;letter-spacing:3.4px;text-transform:uppercase;opacity:.75;margin-bottom:8px;}
+
+  #prog{position:absolute;top:0;left:0;right:0;height:3px;z-index:9;background:rgba(255,255,255,.09);pointer-events:none;}
+  #progfill{height:100%;width:0;background:#5aa39c;box-shadow:0 0 8px #5aa39c;transition:width .18s linear;}
+  body.paused #progfill{box-shadow:none;opacity:.5;}
+  .startbtns{display:flex;gap:10px;justify-content:center;margin-top:24px;flex-wrap:wrap;}
+  .startbtns button{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:1.6px;text-transform:uppercase;padding:12px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:inherit;cursor:pointer;pointer-events:auto;}
+  .startbtns button.pri{background:#5aa39c;color:#15120c;border-color:#5aa39c;font-weight:700;}
+  .startbtns button:active{transform:scale(.97);}
 </style>
 </head>
 <body>
 <div id="app">
   <canvas id="stage"></canvas>
+  <div id="prog"><div id="progfill"></div></div>
   <div id="flash"></div>
   <div id="mute">&#128266;</div>
   <div id="slug" class="dim"></div>
@@ -67,7 +76,7 @@
     <div class="ttl">Today&rsquo;s Date<span class="paren">( Simone )</span></div>
     <div class="sub">Your tap is the verdict.</div>
     <div class="by">Written by <b>Lanre Ajayi</b></div>
-    <div class="start"><span class="p">&#9656; tap to begin</span></div>
+    <div class="startbtns"><button class="pri" id="btnWatch">Watch &#9656;</button><button id="btnAuto">Auto-play</button></div>
   </div>
   <div class="screen hide" id="endScr">
     <div class="chaplabel">End of Chapter 2</div>
@@ -514,6 +523,16 @@ function makeBed(kind){let timer=null,alive=true,nodes=[];
   return {stop(){alive=false;if(timer)clearTimeout(timer);const t=now();nodes.forEach(n=>{try{if(n.gain)n.gain.linearRampToValueAtTime(0.0001,t+0.4);}catch(e){}});setTimeout(()=>{nodes.forEach(n=>{try{n.stop&&n.stop();}catch(e){}});},440);}};}
 /* ================= RUNNER ================= */
 let idx=-1,sceneT0=0,running=false,finishing=false,toEnd=false,transStart=0;
+let auto=false,paused=false,dwell=13,prevTs=0;const progFill=$('progfill');
+function calcDwell(s){let w=0,n=0;
+  const SKIP={k:1,cls:1,who:1,stage:1,set:1,sfx:1};
+  const walk=(x)=>{if(typeof x==='string'){w+=x.split(/\s+/).filter(Boolean).length;}
+    else if(Array.isArray(x)){x.forEach(walk);}
+    else if(x&&typeof x==='object'){for(const key in x){if(!SKIP[key])walk(x[key]);}}};
+  (s.text||[]).forEach(b=>{n+=(b.lines?b.lines.length:1);walk(b);});
+  return Math.max(10,Math.min(19,0.4+n*0.36+w*0.32+2.2));}
+function togglePause(){if(idx<0||finishing||!auto)return;paused=!paused;document.body.classList.toggle('paused',paused);hint.textContent=paused?'\u25b6 tap to resume':'\u23f8 tap to pause';}
+
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function renderText(s){cap.innerHTML='';let dly=0.1;s.text.forEach((b)=>{
   if(b.k==='punch'){b.lines.forEach((ln,j)=>{const el=document.createElement('div');el.className='blk';el.style.animationDelay=dly.toFixed(2)+'s';dly+=0.34;const p=document.createElement('p');p.className='punch'+(b.big?' big':'');p.textContent=ln;el.appendChild(p);cap.appendChild(el);});}
@@ -535,14 +554,15 @@ function enter(i){idx=i;const s=SCENES[i];transStart=performance.now();
   if(s.sfx&&SFX[s.sfx])SFX[s.sfx]();
   startBeds((s.bed||[]).filter(b=>b!=='clap'));
   hint.classList.remove('hide');hint.classList.toggle('cold',!!s.last);
-  hint.textContent=s.last?'tap to end':'tap for the verdict';}
+  dwell=calcDwell(s);if(progFill)progFill.style.width='0%';paused=false;document.body.classList.remove('paused');
+  hint.textContent=auto?'\u23f8 tap to pause':(s.last?'tap to end':'tap for the verdict');}
 function advance(){if(finishing)return;if(idx>=SCENES.length-1){finalSequence();return;}enter(idx+1);}
 function finalSequence(){finishing=true;hint.classList.add('hide');cap.innerHTML='';slug.classList.add('dim');
   if(AC&&!muted)stingS();
   setTimeout(()=>{toEnd=true;stopAllBeds();},1400);
   setTimeout(()=>{$('endScr').classList.remove('hide');},2600);}
-function start(){$('titleScr').classList.add('hide');$('endScr').classList.add('hide');audioInit();if(AC&&AC.state==='suspended')AC.resume();toEnd=false;finishing=false;enter(0);if(!running){running=true;requestAnimationFrame(frame);}}
-function frame(ts){if(!running)return;const el=(ts-sceneT0)/1000;
+function start(a){auto=!!a;$('titleScr').classList.add('hide');$('endScr').classList.add('hide');audioInit();if(AC&&AC.state==='suspended')AC.resume();toEnd=false;finishing=false;enter(0);if(!running){running=true;requestAnimationFrame(frame);}}
+function frame(ts){if(!running)return;const dt=ts-(prevTs||ts);prevTs=ts;if(paused&&idx>=0){sceneT0+=dt;transStart+=dt;}const el=(ts-sceneT0)/1000;if(auto&&!paused&&!finishing&&idx>=0&&!toEnd){if(progFill)progFill.style.width=(Math.min(1,el/dwell)*100)+'%';if(el>=dwell)advance();}
   try{
     if(toEnd){ctx.fillStyle='#10151e';ctx.fillRect(0,0,W,H);}
     else if(idx<0){curLight='cool';flatBase(el);}
@@ -551,9 +571,11 @@ function frame(ts){if(!running)return;const el=(ts-sceneT0)/1000;
   if(grainCv&&!toEnd){ctx.save();ctx.globalAlpha=0.045;ctx.globalCompositeOperation='overlay';const ox=reduceMotion?0:(Math.random()*140)|0,oy=reduceMotion?0:(Math.random()*140)|0;for(let yy=-oy;yy<H;yy+=140)for(let xx=-ox;xx<W;xx+=140)ctx.drawImage(grainCv,xx,yy);ctx.restore();}
   if(!toEnd){const tr=Math.max(0,1-(ts-transStart)/440);if(tr>0){ctx.save();ctx.globalAlpha=tr*tr;ctx.fillStyle='#141c28';ctx.fillRect(0,0,W,H);ctx.restore();}}
   requestAnimationFrame(frame);}
-app.addEventListener('click',(e)=>{if(e.target.id==='mute'||e.target.id==='replayBtn')return;if(!$('titleScr').classList.contains('hide')){start();return;}if(!$('endScr').classList.contains('hide'))return;advance();});
-document.addEventListener('keydown',(e)=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();if(!$('titleScr').classList.contains('hide'))start();else if($('endScr').classList.contains('hide'))advance();}});
-$('replayBtn').addEventListener('click',(e)=>{e.preventDefault();e.stopPropagation();start();});
+app.addEventListener('click',(e)=>{const id=e.target.id;if(id==='mute'||id==='replayBtn'||id==='btnWatch'||id==='btnAuto')return;if(!$('titleScr').classList.contains('hide'))return;if(!$('endScr').classList.contains('hide'))return;if(auto)togglePause();else advance();});
+document.addEventListener('keydown',(e)=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();if(!$('titleScr').classList.contains('hide'))start(false);else if($('endScr').classList.contains('hide')){if(auto)togglePause();else advance();}}});
+$('replayBtn').addEventListener('click',(e)=>{e.preventDefault();e.stopPropagation();start(auto);});
+$('btnWatch').addEventListener('click',(e)=>{e.stopPropagation();start(false);});
+$('btnAuto').addEventListener('click',(e)=>{e.stopPropagation();start(true);});
 $('mute').addEventListener('click',(e)=>{e.stopPropagation();muted=!muted;$('mute').innerHTML=muted?'&#128263;':'&#128266;';if(master)master.gain.value=muted?0:0.85;if(!muted&&AC&&AC.state==='suspended')AC.resume();});
 resize();transStart=performance.now();running=true;requestAnimationFrame(frame);
 </script></body></html>

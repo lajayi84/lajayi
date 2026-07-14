@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Morning Through the Glass</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Mulish:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --globe-gold:#f0b45a;--globe-amber:#e8923c;--snow-shadow:#8a9cc4;--snow-lit:#f4ecdc;
+    --village:#6a5648;--dawn-rose:#e6a598;--dawn-gold:#ffd9a0;--dawn-blue:#a8c4dc;
+    --room-dark:#2a2632;--red:#d5443c;--ink:#efe7dc;--mut:#b9b0c0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Mulish',system-ui,sans-serif;color:var(--ink);background:#100e15;
+    display:flex;align-items:center;justify-content:center;min-height:100%;overflow:hidden;
+    user-select:none;-webkit-user-select:none;touch-action:manipulation;}
+  #app{position:relative;width:100%;max-width:540px;height:100dvh;max-height:940px;overflow:hidden;
+    background:#16131c;cursor:pointer;}
+  #stage{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;}
+  #app::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
+    background:radial-gradient(140% 110% at 50% 40%,transparent 58%,rgba(8,6,12,.5));}
+  #prog{position:absolute;top:0;left:0;right:0;height:3px;z-index:9;background:rgba(240,180,90,.12);}
+  #progfill{height:100%;width:0;background:var(--globe-gold);box-shadow:0 0 8px rgba(240,180,90,.55);transition:width .2s linear;}
+  body.paused #progfill{opacity:.4;box-shadow:none;}
+  #cap{position:absolute;left:0;right:0;bottom:0;z-index:6;
+    padding:0 30px calc(46px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;justify-content:flex-end;gap:8px;min-height:30%;
+    background:linear-gradient(180deg,transparent,rgba(16,12,20,.5) 45%,rgba(12,9,16,.94));pointer-events:none;}
+  .ln{opacity:0;transform:translateY(8px);animation:rise .5s cubic-bezier(.2,.8,.3,1) forwards;}
+  @keyframes rise{to{opacity:1;transform:none;}}
+  .big{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(21px,5.6vw,28px);
+    line-height:1.28;color:#fbf3e8;text-shadow:0 2px 18px rgba(0,0,0,.8);letter-spacing:.005em;}
+  .body{font-family:'Mulish',sans-serif;font-size:16.5px;line-height:1.5;color:#e6ddd2;
+    text-shadow:0 1px 12px rgba(0,0,0,.85);max-width:30em;}
+  .em{color:var(--globe-gold);font-style:italic;font-family:'Fraunces',serif;}
+  .emred{color:#f0766c;font-style:italic;font-family:'Fraunces',serif;}
+  #hint{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));z-index:6;
+    text-align:center;font-family:'Mulish',sans-serif;font-weight:700;font-size:10px;letter-spacing:3px;
+    text-transform:uppercase;color:var(--mut);pointer-events:none;animation:hb 2.4s ease-in-out infinite;}
+  @keyframes hb{0%,100%{opacity:.28;}50%{opacity:.72;}}
+  #hint.hide{display:none;} #hint.last{color:var(--dawn-gold);}
+  .screen{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;padding:38px 30px;}
+  .screen.hide{display:none;}
+  #titleScr{background:radial-gradient(120% 80% at 50% 42%,rgba(240,180,90,.16),transparent 62%),#14111a;}
+  .kick{font-family:'Mulish',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:4px;
+    text-transform:uppercase;color:var(--globe-gold);margin-bottom:16px;opacity:.9;}
+  .ttl{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(34px,8.4vw,50px);
+    line-height:1.02;color:#fbf3e8;letter-spacing:-.01em;text-shadow:0 3px 34px rgba(240,180,90,.28);}
+  .ttl .g{color:var(--globe-gold);}
+  .sub{font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:#c9bfb2;margin-top:16px;
+    max-width:20em;line-height:1.5;}
+  .by{font-family:'Mulish',sans-serif;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--mut);margin-top:22px;}
+  .by b{color:#efe7dc;font-weight:600;}
+  .btns{display:flex;gap:11px;margin-top:28px;}
+  .btn{font-family:'Mulish',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.4px;
+    text-transform:uppercase;padding:14px 24px;border-radius:9px;border:1px solid rgba(240,180,90,.3);
+    background:rgba(240,180,90,.08);color:#efe7dc;cursor:pointer;pointer-events:auto;}
+  .btn.pri{background:var(--globe-gold);color:#231708;border-color:var(--globe-gold);}
+  .btn:active{transform:scale(.97);}
+  #endScr{background:linear-gradient(180deg,#ffd9a0 0%,#e6a598 42%,#a8c4dc 100%);}
+  #endScr .kick{color:#7a4a3a;}
+  #endScr .ttl{color:#4a2c28;text-shadow:0 2px 24px rgba(255,240,200,.5);}
+  #endScr .ttl .g{color:#c25a4a;}
+  #endScr .epi{font-family:'Fraunces',serif;font-style:italic;font-size:16.5px;color:#5a3a34;
+    max-width:23em;margin-top:16px;line-height:1.55;}
+  #endScr .by{color:#7a5248;} #endScr .by b{color:#4a2c28;}
+  .replay{margin-top:26px;font-family:'Mulish',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.3px;
+    text-transform:uppercase;color:#5a3a34;border:1px solid rgba(90,58,52,.35);border-radius:9px;
+    padding:13px 24px;background:rgba(255,255,255,.18);pointer-events:auto;cursor:pointer;}
+  .replay:active{transform:scale(.97);}
+  #mute{position:absolute;top:13px;right:15px;z-index:10;cursor:pointer;width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;font-size:14px;border-radius:50%;
+    background:rgba(20,16,26,.5);border:1px solid rgba(240,180,90,.18);pointer-events:auto;}
+  @media (prefers-reduced-motion:reduce){.ln{animation-duration:.01s;}#hint{animation:none;}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="stage"></canvas>
+  <div id="mute">&#128266;</div>
+  <div id="prog"><div id="progfill"></div></div>
+  <div id="cap"></div>
+  <div id="hint" class="hide">tap</div>
+  <div class="screen" id="titleScr">
+    <div class="kick">A picture book</div>
+    <div class="ttl">The Morning<br>Through the <span class="g">Glass</span></div>
+    <div class="sub">Inside the glass it is always snowing &mdash; and one small girl can see a morning no one else believes in.</div>
+    <div class="by">Written by <b>Lanre Ajayi</b></div>
+    <div class="btns"><button class="btn pri" id="btnAuto">&#9656; Read to me</button><button class="btn" id="btnRead">Read it myself</button></div>
+  </div>
+  <div class="screen hide" id="endScr">
+    <div class="kick">The End</div>
+    <div class="ttl">The Morning<br>Through the <span class="g">Glass</span></div>
+    <div class="epi">&ldquo;She had seen it through the glass, when no one else could. And it was true all along.&rdquo;</div>
+    <div class="by">Written by <b>Lanre Ajayi</b></div>
+    <div class="tipline" style="margin-top:14px;font-family:'Mulish',sans-serif;font-size:11px;letter-spacing:.3px;color:#7a5248;">Made by Lanre Ajayi &middot; <a href="https://ko-fi.com/lanreajayi" target="_blank" rel="noopener" style="color:#c25a4a;text-decoration:none;border-bottom:1px solid rgba(194,90,74,.4);pointer-events:auto;">leave a tip</a></div>
+    <div class="replay" id="replayBtn">&#8634; Read again</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* THE MORNING THROUGH THE GLASS — 16 spreads.
+   Each: {art, snow(0..1 density), dawn(0..1 how much real morning shows through window),
+          view(globe|closeup|out|tip|morning), wren:{...}, text:[...]}
+   'dawn' rises OUTSIDE the whole book; globe light stays fixed until the tip. */
+const B=s=>({t:'big',s});      // Fraunces big line
+const P=s=>({t:'body',s});     // body line
+const SCENES=[
+ // 1 — establish: it is always snowing
+ {view:'globe',snow:.5,dawn:.06,
+  text:[B("Inside the glass, it was always snowing."),
+        P("A village with warm little windows, a church with a pointed roof, and a small stone bridge over a frozen stream. And the snow came down, and down, and never stopped.")]},
+ // 2 — everyone is happy, no one looks up
+ {view:'globe',snow:.5,dawn:.06,crowd:1,
+  text:[P("Everyone who lived in the village was happy. They had always been happy."),
+        P("They looked at the square, and the shops, and each other. Not one of them ever looked up.")]},
+ // 3 — the beautiful snow (tap makes snow)
+ {view:'globe',snow:.8,dawn:.06,
+  text:[P("Down came the snow, soft and slow and golden in the window-light. It settled on the rooftops. It settled on the trees."),
+        B("It was beautiful.")]},
+ // 4 — Wren, on the bridge, red scarf, looking up
+ {view:'closeup',snow:.5,dawn:.08,wren:{on:1,scarf:1,look:'up'},
+  text:[P("But there was one who was different. Her name was Wren, stitched small into the end of her red scarf \u2014 the only spot of red in all that white \u2014 though she had never seen it, and did not know it was there."),
+        P("When she was made, she was painted looking up.")]},
+ // 5 — she sees OUT through the curved glass
+ {view:'closeup',snow:.45,dawn:.12,wren:{on:1,scarf:1,look:'up'},curve:1,
+  text:[B("And because she looked up, she saw what no one else could."),
+        P("Past her own sky. Past the top of the falling snow. Through the curved edge of the glass, where everything went strange and wide \u2014 Wren could see out.")]},
+ // 6 — the room, the window, the red balloon
+ {view:'out',snow:.4,dawn:.34,balloon:.5,
+  text:[P("Out there was a room she had never known was there. A great table. A tall window."),
+        B("And through the window, far away, in a sky that moved \u2014 a little balloon. And it was red, like her scarf.")]},
+ // 7 — the light changes: morning happening
+ {view:'out',snow:.4,dawn:.6,balloon:.56,
+  text:[P("She watched it drift. And as she watched, the sky behind it changed."),
+        B("It went from dark, to grey, to gold. Out there, past all the glass, it was becoming morning.")]},
+ // 8 — she calls to the others
+ {view:'closeup',snow:.5,dawn:.5,wren:{on:1,scarf:1,look:'call'},
+  text:[B("\u201cLook up!\u201d Wren called from the bridge."),
+        P("\u201cThere's a window! There's a whole world! There's a sky that changes \u2014 there's a morning!\u201d")]},
+ // 9 — the others KINDLY invite her back (warm, sincere)
+ {view:'globe',snow:.55,dawn:.4,crowd:1,warm:1,
+  text:[P("But the others only smiled, kindly. \u201cCome down, Wren,\u201d they said. \u201cCome in from the cold."),
+        P("The snow is beautiful. The square is warm. Come and be happy with us.\u201d And they meant it. They loved her, and they wanted her close.")]},
+ // 10 — the hard part: they're not wrong, and she is cold and alone
+ {view:'closeup',snow:.6,dawn:.36,wren:{on:1,scarf:1,look:'up'},lonely:1,
+  text:[P("And that was the hard part. They were not wrong — it was beautiful. The square was warm. And out on the bridge, alone, Wren was cold."),
+        B("It just never, ever changed.")]},
+ // 11 — she stays on the bridge, they call gently, she looks up
+ {view:'closeup',snow:.5,dawn:.7,wren:{on:1,scarf:1,look:'up'},curve:1,
+  text:[P("So she stayed on the bridge, and watched the morning through the glass, all on her own."),
+        P("Out the window, the light kept moving. Inside the glass, it never did. “Come and be happy,” the others called, gently. And still, Wren looked up.")]},
+ // 12 — THE FORK: she almost turns back to the warm square
+ {view:'closeup',snow:.6,dawn:.5,wren:{on:1,scarf:1,look:'down'},dim:1,turning:1,
+  text:[P("But one day, when she had waited so very long, she almost turned around. Her friends were warm. Her friends were sure."),
+        P("It would be so easy to come down off the bridge, and forget she had ever seen a morning at all. Maybe there had never been one. Maybe she should just be happy.")]},
+ // 13 — THE CHOICE: she had started to turn, then chose the morning
+ {view:'closeup',snow:.5,dawn:.6,wren:{on:1,scarf:1,look:'up'},choice:1,
+  text:[P("And she almost did. She had even started to turn — when she remembered: she had seen it. It had been real."),
+        B("And a thing you have truly seen, you cannot un-see."),
+        P("So Wren turned back to the cold, and the glass, and the far-off morning — and she chose it. She did not look away.")]},
+ // 14 — the hand
+ {view:'out',snow:.45,dawn:.82,balloon:.6,hand:.7,
+  text:[P("Then \u2014 one day \u2014 out of the great wide world she could never reach \u2026"),
+        B("a hand."),
+        P("It came across the room, soft and slow and enormous, and it reached for the glass.")]},
+ // 15 — the world tips
+ {view:'tip',snow:1,dawn:.9,
+  text:[B("And the whole world tipped."),
+        P("The village turned. The snow flew up. The little tune that had played the same notes forever broke open into wind.")]},
+ // 16 — morning, real, she's out; others begin to look up
+ {view:'morning',snow:.2,dawn:1,balloon:.8,wren:{on:1,scarf:1,look:'out'},last:1,
+  text:[B("And the glass opened, and the morning came in \u2014 real, and moving, and warm."),
+        P("She was out. The sky was wide. The red balloon was drifting, not so far away now. And behind her, in the tilting globe, the others \u2014 for the very first time \u2014 were beginning to look up.")]}
+];
+
+/* ===== THE MORNING THROUGH THE GLASS — engine ===== */
+const $=id=>document.getElementById(id);
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const app=$('app'),cv=$('stage'),ctx=cv.getContext('2d'),cap=$('cap'),hint=$('hint');
+let W=0,H=0,DPR=1,grainCv=null;
+function rgb(c){return 'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';}
+function rgba(c,a){return 'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+a+')';}
+function mix(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
+function resize(){const r=app.getBoundingClientRect();W=r.width||540;H=r.height||900;DPR=Math.min(2,window.devicePixelRatio||1);cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);buildGrain();}
+window.addEventListener('resize',resize);
+function buildGrain(){grainCv=document.createElement('canvas');grainCv.width=130;grainCv.height=130;const g=grainCv.getContext('2d');const im=g.createImageData(130,130);for(let i=0;i<im.data.length;i+=4){const v=128+(Math.random()*2-1)*32;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255;}g.putImageData(im,0,0);}
+function roundr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+const COL={
+  globeGold:[240,180,90], globeAmber:[232,146,60], snowShadow:[138,156,196],
+  snowLit:[244,236,220], village:[106,86,72], stone:[150,140,150],
+  dawnRose:[230,165,152], dawnGold:[255,217,160], dawnBlue:[168,196,220],
+  roomDark:[42,38,50], red:[213,68,60], redLit:[240,118,108], tree:[70,86,74]
+};
+
+/* ---------- the real world behind/around the globe ---------- */
+function drawRoom(dawn){
+  // room wall + a tall window through which the dawn (and balloon) is seen
+  const roomTop=mix(COL.roomDark,[70,66,84],dawn*0.5);
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,rgb(mix(roomTop,COL.dawnBlue,dawn*0.4)));
+  g.addColorStop(1,rgb(mix([26,24,32],[60,50,60],dawn*0.4)));
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // the window — right side, tall
+  const wx=W*0.60,wy=H*0.10,ww=W*0.36,wh=H*0.52;
+  // sky in the window = the moving morning
+  const sky=ctx.createLinearGradient(wx,wy,wx,wy+wh);
+  sky.addColorStop(0,rgb(mix(COL.roomDark,COL.dawnBlue,dawn)));
+  sky.addColorStop(0.55,rgb(mix(COL.roomDark,COL.dawnGold,dawn)));
+  sky.addColorStop(1,rgb(mix(COL.roomDark,COL.dawnRose,dawn)));
+  ctx.fillStyle=sky;ctx.fillRect(wx,wy,ww,wh);
+  // sun glow rising as dawn->1
+  if(dawn>0.2){const sx=wx+ww*0.5,sy=wy+wh*(1-dawn*0.5);const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,ww*0.9);sg.addColorStop(0,rgba([255,240,205],0.5*dawn));sg.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=sg;ctx.fillRect(wx,wy,ww,wh);}
+  // window frame
+  ctx.strokeStyle=rgb(mix([40,34,42],[90,74,70],dawn));ctx.lineWidth=W*0.018;ctx.strokeRect(wx,wy,ww,wh);
+  ctx.beginPath();ctx.moveTo(wx+ww/2,wy);ctx.lineTo(wx+ww/2,wy+wh);ctx.moveTo(wx,wy+wh/2);ctx.lineTo(wx+ww,wy+wh/2);ctx.stroke();
+  return {wx,wy,ww,wh};
+}
+function drawBalloon(cx,cy,scale,amt){
+  if(amt<=0)return;
+  ctx.save();ctx.globalAlpha=Math.min(1,amt*1.6);
+  const r=scale;
+  // envelope — red, the one warm saturated note outside
+  const g=ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);
+  g.addColorStop(0,rgb(COL.redLit));g.addColorStop(0.5,rgb(COL.red));g.addColorStop(1,rgb(mix(COL.red,[120,30,26],0.5)));
+  ctx.fillStyle=g;
+  ctx.beginPath();ctx.moveTo(cx,cy-r);
+  ctx.bezierCurveTo(cx+r*1.05,cy-r*0.9,cx+r*0.95,cy+r*0.5,cx,cy+r*0.7);
+  ctx.bezierCurveTo(cx-r*0.95,cy+r*0.5,cx-r*1.05,cy-r*0.9,cx,cy-r);
+  ctx.fill();
+  // vertical panel seams (cream)
+  ctx.strokeStyle=rgba([250,240,220],0.55);ctx.lineWidth=Math.max(1,r*0.05);
+  for(let i=-2;i<=2;i++){ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.quadraticCurveTo(cx+i*r*0.4,cy-r*0.1,cx,cy+r*0.7);ctx.stroke();}
+  // basket
+  ctx.fillStyle=rgb([120,84,52]);roundr(cx-r*0.16,cy+r*0.92,r*0.32,r*0.22,2);ctx.fill();
+  ctx.strokeStyle=rgba([230,210,180],0.5);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(cx-r*0.14,cy+r*0.7);ctx.lineTo(cx-r*0.13,cy+r*0.92);ctx.moveTo(cx+r*0.14,cy+r*0.7);ctx.lineTo(cx+r*0.13,cy+r*0.92);ctx.stroke();
+  ctx.restore();
+}
+
+/* ---------- the globe ---------- */
+function globeGeom(){return {cx:W*0.42,cy:H*0.40,r:Math.min(W*0.40,H*0.30)};}
+function drawBase(cx,cy,r){
+  // wooden base
+  const by=cy+r*0.86, bw=r*1.5, bh=r*0.42;
+  const g=ctx.createLinearGradient(cx,by,cx,by+bh);
+  g.addColorStop(0,rgb([92,64,42]));g.addColorStop(1,rgb([54,36,24]));
+  ctx.fillStyle=g;roundr(cx-bw/2,by,bw,bh,r*0.1);ctx.fill();
+  ctx.fillStyle=rgba([30,20,14],0.5);roundr(cx-bw/2,by+bh*0.7,bw,bh*0.3,r*0.08);ctx.fill();
+  // rim highlight
+  ctx.fillStyle=rgba([150,110,74],0.5);roundr(cx-bw/2,by,bw,bh*0.16,r*0.08);ctx.fill();
+}
+/* the painted village inside — warm, static, gold. snow density 0..1. */
+function drawVillageInterior(cx,cy,r,snow,tip,frameSnow){
+  ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,r*0.98,0,7);ctx.clip();
+  if(tip){ctx.translate(cx,cy);ctx.rotate(tip*0.5);ctx.translate(-cx,-cy);}
+  // sky inside globe = fixed warm gold dusk (NEVER changes)
+  const sky=ctx.createLinearGradient(cx,cy-r,cx,cy+r);
+  sky.addColorStop(0,rgb(mix(COL.snowShadow,COL.globeGold,0.4)));
+  sky.addColorStop(0.6,rgb(mix([210,200,210],COL.globeGold,0.5)));
+  sky.addColorStop(1,rgb(COL.snowLit));
+  ctx.fillStyle=sky;ctx.fillRect(cx-r,cy-r,r*2,r*2);
+  // distant trees
+  const gy=cy+r*0.5;
+  for(let i=-3;i<=3;i++){const tx=cx+i*r*0.28+((i%2)?r*0.1:0);const th=r*(0.3+0.08*((i+3)%3));
+    ctx.fillStyle=rgb(mix(COL.tree,COL.snowLit,0.25));
+    ctx.beginPath();ctx.moveTo(tx,gy-th);ctx.lineTo(tx+r*0.11,gy);ctx.lineTo(tx-r*0.11,gy);ctx.closePath();ctx.fill();
+    ctx.fillStyle=rgba(COL.snowLit,0.7);ctx.beginPath();ctx.moveTo(tx,gy-th);ctx.lineTo(tx+r*0.05,gy-th*0.5);ctx.lineTo(tx-r*0.05,gy-th*0.5);ctx.closePath();ctx.fill();}
+  // church (center-back) with pointed roof + warm windows
+  const chx=cx+r*0.05,chy=cy+r*0.06;
+  ctx.fillStyle=rgb(COL.village);ctx.fillRect(chx-r*0.1,chy,r*0.2,r*0.34);
+  ctx.fillStyle=rgb(mix(COL.village,[40,30,26],0.4));ctx.beginPath();ctx.moveTo(chx-r*0.12,chy);ctx.lineTo(chx,chy-r*0.3);ctx.lineTo(chx+r*0.12,chy);ctx.closePath();ctx.fill();
+  ctx.fillStyle=rgb(COL.globeAmber);ctx.fillRect(chx-r*0.03,chy+r*0.08,r*0.06,r*0.1);
+  // cottages left & right with lit windows
+  for(const s of[-1,1]){const hx=cx+s*r*0.42,hy=cy+r*0.22;
+    ctx.fillStyle=rgb(mix(COL.village,[90,70,58],0.3));ctx.fillRect(hx-r*0.16,hy,r*0.32,r*0.22);
+    ctx.fillStyle=rgb(mix(COL.village,[30,22,18],0.5));ctx.beginPath();ctx.moveTo(hx-r*0.18,hy);ctx.lineTo(hx,hy-r*0.14);ctx.lineTo(hx+r*0.18,hy);ctx.closePath();ctx.fill();
+    // snow caps
+    ctx.fillStyle=rgba(COL.snowLit,0.9);ctx.beginPath();ctx.moveTo(hx-r*0.18,hy);ctx.lineTo(hx,hy-r*0.14);ctx.lineTo(hx+r*0.18,hy);ctx.closePath();ctx.fill();
+    // warm windows
+    ctx.fillStyle=rgb(COL.globeAmber);ctx.shadowColor=rgb(COL.globeGold);ctx.shadowBlur=8;
+    ctx.fillRect(hx-r*0.08,hy+r*0.06,r*0.05,r*0.07);ctx.fillRect(hx+r*0.03,hy+r*0.06,r*0.05,r*0.07);ctx.shadowBlur=0;}
+  // ground snow + the frozen stream + the little stone bridge
+  ctx.fillStyle=rgb(COL.snowLit);ctx.fillRect(cx-r,cy+r*0.44,r*2,r*0.6);
+  // stream
+  ctx.fillStyle=rgba(COL.snowShadow,0.5);ctx.fillRect(cx-r,cy+r*0.6,r*2,r*0.12);
+  // bridge (center-front) — Wren's spot
+  const bx=cx-r*0.02,byy=cy+r*0.6;
+  ctx.strokeStyle=rgb(COL.stone);ctx.lineWidth=r*0.07;
+  ctx.beginPath();ctx.arc(bx,byy+r*0.06,r*0.16,Math.PI,2*Math.PI);ctx.stroke();
+  ctx.fillStyle=rgba(COL.snowLit,0.85);ctx.beginPath();ctx.arc(bx,byy+r*0.06,r*0.19,Math.PI*1.05,Math.PI*1.95);ctx.lineWidth=r*0.03;ctx.stroke();
+  ctx.restore();
+  return {bridgeX:bx,bridgeY:byy};
+}
+
+/* ---------- Wren, the girl on the bridge with the red scarf ---------- */
+function drawWren(x,y,s,look,dim,facing){
+  // s = scale (head radius-ish). look: 'up'|'down'|'call'|'out'
+  ctx.save();
+  if(facing){ctx.translate(x,0);ctx.scale(-1,1);ctx.translate(-x,0);}
+  const bodyCol=dim?mix([120,110,100],[70,64,72],0.5):[150,120,100];
+  // little coat
+  ctx.fillStyle=rgb(bodyCol);
+  ctx.beginPath();ctx.moveTo(x-s*0.7,y+s*1.8);ctx.quadraticCurveTo(x-s*0.6,y+s*0.4,x-s*0.3,y+s*0.2);ctx.lineTo(x+s*0.3,y+s*0.2);ctx.quadraticCurveTo(x+s*0.6,y+s*0.4,x+s*0.7,y+s*1.8);ctx.closePath();ctx.fill();
+  // THE RED SCARF — the one spot of red inside
+  const sc=dim?mix(COL.red,[90,70,72],0.35):COL.red;
+  ctx.fillStyle=rgb(sc);
+  ctx.beginPath();ctx.moveTo(x-s*0.34,y+s*0.15);ctx.quadraticCurveTo(x,y+s*0.34,x+s*0.34,y+s*0.15);ctx.quadraticCurveTo(x+s*0.3,y+s*0.5,x,y+s*0.5);ctx.quadraticCurveTo(x-s*0.3,y+s*0.5,x-s*0.34,y+s*0.15);ctx.fill();
+  // trailing end of scarf (where the name is stitched, never shown legibly)
+  ctx.fillStyle=rgb(sc);ctx.beginPath();ctx.moveTo(x+s*0.2,y+s*0.4);ctx.lineTo(x+s*0.44,y+s*1.1);ctx.lineTo(x+s*0.2,y+s*1.05);ctx.closePath();ctx.fill();
+  // head
+  const hy=y-s*0.15;
+  ctx.fillStyle=rgb(dim?[190,168,150]:[224,196,170]);ctx.beginPath();ctx.arc(x,hy,s*0.62,0,7);ctx.fill();
+  // hair
+  ctx.fillStyle=rgb([92,64,44]);ctx.beginPath();ctx.arc(x,hy-s*0.12,s*0.66,Math.PI*1.05,Math.PI*2-0.05);ctx.fill();
+  // face tipped by 'look'
+  const up = look==='up'||look==='call'||look==='out';
+  const ey=hy+(up?-s*0.08:s*0.06);
+  ctx.fillStyle=rgb([60,44,34]);
+  ctx.beginPath();ctx.arc(x-s*0.2,ey,s*0.07,0,7);ctx.arc(x+s*0.2,ey,s*0.07,0,7);ctx.fill();
+  // mouth
+  ctx.strokeStyle=rgb([150,90,80]);ctx.lineWidth=Math.max(1,s*0.06);ctx.beginPath();
+  if(look==='call'){ctx.arc(x,hy+s*0.24,s*0.1,0,Math.PI);}     // open, calling
+  else if(look==='down'){ctx.moveTo(x-s*0.12,hy+s*0.3);ctx.quadraticCurveTo(x,hy+s*0.24,x+s*0.12,hy+s*0.3);} // slight down
+  else{ctx.moveTo(x-s*0.1,hy+s*0.26);ctx.quadraticCurveTo(x,hy+s*0.32,x+s*0.1,hy+s*0.26);} // soft
+  ctx.stroke();
+  ctx.restore();
+}
+/* small anonymous villagers, all facing the square (never up) */
+function drawCrowd(cx,cy,r){
+  const spots=[[-0.5,0.3],[-0.3,0.36],[0.3,0.34],[0.5,0.3],[-0.15,0.4],[0.15,0.4]];
+  for(const [dx,dy] of spots){const x=cx+dx*r,y=cy+dy*r,s=r*0.05;
+    ctx.fillStyle=rgb(mix(COL.village,[120,100,86],0.4));
+    ctx.beginPath();ctx.moveTo(x-s,y+s*3);ctx.quadraticCurveTo(x-s*0.8,y+s*0.6,x,y);ctx.quadraticCurveTo(x+s*0.8,y+s*0.6,x+s,y+s*3);ctx.closePath();ctx.fill();
+    ctx.fillStyle=rgb([210,184,160]);ctx.beginPath();ctx.arc(x,y-s*0.3,s*0.7,0,7);ctx.fill();}
+}
+/* the glass dome — curved reflection + the CURVE distortion where she sees out */
+function drawGlass(cx,cy,r,showCurve,dawn){
+  // glass sphere sheen
+  ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,7);
+  ctx.strokeStyle=rgba([255,255,255],0.28);ctx.lineWidth=2;ctx.stroke();
+  // top-left specular
+  const g=ctx.createRadialGradient(cx-r*0.4,cy-r*0.45,0,cx-r*0.4,cy-r*0.45,r*0.9);
+  g.addColorStop(0,rgba([255,255,255],0.22));g.addColorStop(0.4,'rgba(255,255,255,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();
+  // bottom refraction warm
+  const g2=ctx.createRadialGradient(cx+r*0.3,cy+r*0.5,0,cx+r*0.3,cy+r*0.5,r*0.7);
+  g2.addColorStop(0,rgba(COL.globeGold,0.14));g2.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g2;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();
+  // THE CURVE: at top-right edge, a smeared reflection of the real dawn/window
+  // — this is what Wren sees THROUGH: the outside, bent by the glass
+  if(showCurve){
+    ctx.save();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.clip();
+    const ex=cx+r*0.66,ey=cy-r*0.5;
+    const cg=ctx.createRadialGradient(ex,ey,0,ex,ey,r*0.6);
+    cg.addColorStop(0,rgba(mix(COL.dawnGold,[255,255,255],0.3),0.5*Math.max(0.3,dawn)));
+    cg.addColorStop(0.5,rgba(COL.dawnRose,0.28*Math.max(0.3,dawn)));
+    cg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=cg;ctx.fillRect(cx-r,cy-r,r*2,r*2);
+    // a tiny bent red dot — the balloon, refracted through the glass
+    if(dawn>0.1){ctx.fillStyle=rgba(COL.redLit,0.85);ctx.beginPath();ctx.ellipse(ex+r*0.05,ey+r*0.02,r*0.03,r*0.045,0.3,0,7);ctx.fill();}
+    ctx.restore();
+  }
+  ctx.restore();
+}
+/* snow — inside the globe. dir +1 falling, -1 flying up (the tip) */
+let SNOW=[];
+function initSnow(){SNOW=[];for(let i=0;i<90;i++)SNOW.push({a:Math.random()*6.28,rr:Math.random(),sp:0.2+Math.random()*0.6,sz:0.6+Math.random()*1.6,ph:Math.random()*6.28});}
+function drawSnow(cx,cy,r,density,dir,t){
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r*0.98,0,7);ctx.clip();
+  const n=Math.floor(SNOW.length*density);
+  for(let i=0;i<n;i++){const f=SNOW[i];
+    // position within circle
+    const ang=f.a, rad=f.rr*r*0.95;
+    let px=cx+Math.cos(ang)*rad;
+    let drift=Math.sin(t*0.0006*f.sp+f.ph)*r*0.04;
+    let fall=((t*0.00006*f.sp*dir)+f.rr)%1;
+    let py=cy-r*0.95 + fall*r*1.9*(dir>0?1:1);
+    if(dir<0){py=cy+r*0.95 - fall*r*1.9;} // upward
+    ctx.fillStyle=rgba([255,255,255],0.85);
+    ctx.beginPath();ctx.arc(px+drift,py,f.sz,0,7);ctx.fill();
+  }
+  ctx.restore();
+}
+initSnow();
+
+/* ===== compose each spread from its view type ===== */
+let _t=0;
+function paintScene(sc,t){
+  _t=t;
+  const dawn=sc.dawn||0, snow=sc.snow||0, view=sc.view;
+  const G=globeGeom();
+  if(view==='morning'){ paintMorning(sc,t); return; }
+  // background: the dim room + window + real dawn behind the globe
+  drawRoom(dawn);
+  // balloon seen through the REAL window (right side)
+  if(sc.balloon){const wx=W*0.60,ww=W*0.36;drawBalloon(wx+ww*0.5,H*0.24-dawn*H*0.04,W*0.05,sc.balloon);}
+  // the hand reaching (spread 14)
+  if(sc.hand){drawHand(sc.hand,t);}
+  // the globe
+  drawBase(G.cx,G.cy,G.r);
+  const tip = view==='tip' ? Math.min(1,(t%100000)/1) : 0; // tip handled in runner via sc._tip
+  const tp = sc._tip||0;
+  drawVillageInterior(G.cx,G.cy,G.r,snow,tp);
+  // crowd of villagers (facing square)
+  if(sc.crowd)drawCrowd(G.cx,G.cy,G.r);
+  // warm invitation glow from the square (kind others pulling her back)
+  if(sc.warm||sc.turning){
+    ctx.save();ctx.beginPath();ctx.arc(G.cx,G.cy,G.r*0.98,0,7);ctx.clip();
+    const gx=G.cx-G.r*0.5, gy=G.cy+G.r*0.35;
+    const wg=ctx.createRadialGradient(gx,gy,0,gx,gy,G.r*0.9);
+    wg.addColorStop(0,rgba(COL.globeAmber,(sc.turning?0.32:0.20)));
+    wg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=wg;ctx.fillRect(G.cx-G.r,G.cy-G.r,G.r*2,G.r*2);ctx.restore();
+  }
+  // Wren on the bridge
+  if(sc.wren&&sc.wren.on){
+    const bx=G.cx-G.r*0.02, by=G.cy+G.r*0.6;
+    ctx.save();
+    if(tp){ctx.translate(G.cx,G.cy);ctx.rotate(tp*0.5);ctx.translate(-G.cx,-G.cy);}
+    // clip to globe so she stays inside
+    ctx.beginPath();ctx.arc(G.cx,G.cy,G.r*0.98,0,7);ctx.clip();
+    // 'turning' = she faces the warm square (mirrored, looking away from glass/up)
+    const look = sc.turning ? 'down' : sc.wren.look;
+    drawWren(bx,by-G.r*0.14,G.r*0.13,look,sc.dim,sc.turning);
+    ctx.restore();
+  }
+  // snow inside (upward if tipping)
+  drawSnow(G.cx,G.cy,G.r,snow,tp>0.3?-1:1,t);
+  // the glass — with the curved view out on closeups
+  drawGlass(G.cx,G.cy,G.r,(view==='closeup'||sc.curve||view==='out'),dawn);
+  // closeup: zoom emphasis — a soft magnifier ring around the bridge area
+  if(view==='closeup'&&sc.wren){
+    ctx.save();ctx.strokeStyle=rgba([255,255,255],0.10);ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(G.cx-G.r*0.02,G.cy+G.r*0.46,G.r*0.3,0,7);ctx.stroke();ctx.restore();
+  }
+  vignette(dawn);
+}
+function paintMorning(sc,t){
+  // she is OUT — real dawn fills everything
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,rgb(COL.dawnBlue));g.addColorStop(0.5,rgb(COL.dawnGold));g.addColorStop(1,rgb(COL.dawnRose));
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // sun
+  const sx=W*0.5,sy=H*0.34;const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,W*0.7);
+  sg.addColorStop(0,rgba([255,248,224],0.8));sg.addColorStop(0.4,rgba([255,230,190],0.3));sg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sg;ctx.fillRect(0,0,W,H);
+  // the red balloon, closer now
+  drawBalloon(W*0.68,H*0.30,W*0.10,sc.balloon||0.8);
+  // the tilted globe below-left, tiny now, others starting to look up
+  const gx=W*0.28,gy=H*0.66,gr=W*0.17;
+  ctx.save();ctx.translate(gx,gy);ctx.rotate(-0.35);ctx.translate(-gx,-gy);
+  drawBase(gx,gy,gr);drawVillageInterior(gx,gy,gr,0.2,0);
+  ctx.restore();
+  drawGlass(gx,gy,gr,false,1);
+  // Wren, OUT, standing in the morning, looking out/up — larger, foreground
+  drawWren(W*0.5,H*0.6,W*0.07,'out',false);
+  vignette(0);
+}
+function drawHand(amt,t){
+  // a child's hand entering from bottom-right, reaching for the globe
+  ctx.save();ctx.globalAlpha=Math.min(1,amt);
+  const hx=W*0.9-amt*W*0.2, hy=H*0.95-amt*H*0.15;
+  ctx.fillStyle=rgba([224,196,170],0.96);
+  // palm
+  ctx.beginPath();ctx.ellipse(hx,hy,W*0.16,H*0.14,-0.5,0,7);ctx.fill();
+  // fingers reaching up-left toward globe
+  for(let i=0;i<4;i++){const a=-0.9-i*0.22;const fx=hx+Math.cos(a)*W*0.15,fy=hy+Math.sin(a)*W*0.15;
+    ctx.beginPath();ctx.ellipse(fx,fy,W*0.035,W*0.08,a,0,7);ctx.fill();}
+  ctx.fillStyle=rgba([255,255,255],0.08);ctx.beginPath();ctx.ellipse(hx-W*0.04,hy-H*0.03,W*0.08,H*0.06,-0.5,0,7);ctx.fill();
+  ctx.restore();
+}
+function vignette(dawn){
+  ctx.fillStyle=rgba([8,6,12],0.15*(1-dawn*0.6));ctx.fillRect(0,0,W,H);
+  const v=ctx.createRadialGradient(W/2,H*0.42,H*0.22,W/2,H*0.42,H*0.72);
+  v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,rgba([6,4,10],0.5*(1-dawn*0.5)));
+  ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+}
+
+/* ===== runner: text, audio (music-box -> wind), tap/auto, the tip ===== */
+/* ---------- audio ---------- */
+let AC=null,master=null,muted=false,bed=[],boxGain=null,boxTimer=null;
+function audioInit(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=0.8;master.connect(AC.destination);}catch(e){AC=null;}}
+function T(){return AC?AC.currentTime:0;}
+function nbuf(d){const sr=AC.sampleRate,b=AC.createBuffer(1,Math.floor(sr*d),sr),x=b.getChannelData(0);for(let i=0;i<x.length;i++)x[i]=Math.random()*2-1;return b;}
+// a short music-box phrase, looping, slightly winding-down feel
+const PHRASE=[0,4,7,11,7,4, 0,4,9,7, 5,4,2,0]; // scale degrees
+const SCALE=[523.25,587.33,659.25,698.46,783.99,880,987.77,1046.5,1174.7,1318.5,1396.9,1568]; 
+function noteBox(freq,t,dur,g){const o=AC.createOscillator();o.type='triangle';o.frequency.value=freq;const ga=AC.createGain();ga.gain.setValueAtTime(0.0001,t);ga.gain.exponentialRampToValueAtTime(0.14,t+0.01);ga.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(ga);ga.connect(g);o.start(t);o.stop(t+dur+0.02);}
+function startBox(){if(!AC)return;boxGain=AC.createGain();boxGain.gain.value=muted?0:0.5;boxGain.connect(master);
+  let i=0;const step=0.42;
+  function schedule(){if(!AC||!boxGain)return;const base=T()+0.05;
+    for(let k=0;k<PHRASE.length;k++){const deg=PHRASE[k];const f=SCALE[deg%SCALE.length]*(deg>=SCALE.length?2:1);noteBox(f,base+k*step,0.5,boxGain);}
+  }
+  schedule();boxTimer=setInterval(schedule,step*PHRASE.length*1000);
+  // soft under-glass pad
+  const o=AC.createOscillator();o.type='sine';o.frequency.value=130;const pg=AC.createGain();pg.gain.value=0.0001;pg.gain.linearRampToValueAtTime(muted?0.0001:0.04,T()+2);o.connect(pg);pg.connect(master);o.start();bed.push(o,pg);}
+function breakToWind(){ // the tip: music-box stops, wind + held warm note
+  if(!AC)return;
+  if(boxTimer){clearInterval(boxTimer);boxTimer=null;}
+  if(boxGain){const t=T();boxGain.gain.cancelScheduledValues(t);boxGain.gain.setValueAtTime(boxGain.gain.value,t);boxGain.gain.exponentialRampToValueAtTime(0.0001,t+0.4);}
+  const t=T();
+  // wind
+  const s=AC.createBufferSource();s.buffer=nbuf(3);s.loop=true;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=500;bp.Q.value=0.6;const wg=AC.createGain();wg.gain.setValueAtTime(0.0001,t);wg.gain.linearRampToValueAtTime(muted?0.0001:0.12,t+1.2);s.connect(bp);bp.connect(wg);wg.connect(master);s.start();bed.push(s,wg);
+  // one held warm note (morning)
+  const o=AC.createOscillator();o.type='sine';o.frequency.value=392;const o2=AC.createOscillator();o2.type='sine';o2.frequency.value=587.33;const g=AC.createGain();g.gain.setValueAtTime(0.0001,t+0.3);g.gain.linearRampToValueAtTime(muted?0.0001:0.09,t+1.6);o.connect(g);o2.connect(g);g.connect(master);o.start(t+0.3);o2.start(t+0.3);bed.push(o,o2,g);}
+function snowTap(){if(!AC||muted)return;const t=T();const o=AC.createOscillator();o.type='sine';o.frequency.setValueAtTime(1400,t);o.frequency.exponentialRampToValueAtTime(900,t+0.08);const g=AC.createGain();g.gain.setValueAtTime(0.05,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.12);o.connect(g);g.connect(master);o.start(t);o.stop(t+0.13);}
+function stopAudio(){if(boxTimer){clearInterval(boxTimer);boxTimer=null;}if(AC){const t=T();bed.forEach(n=>{if(n.gain)try{n.gain.linearRampToValueAtTime(0.0001,t+0.4);}catch(e){}});if(boxGain)try{boxGain.gain.linearRampToValueAtTime(0.0001,t+0.4);}catch(e){}}}
+
+/* ---------- text ---------- */
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmt(s){ // italicize *word* as gold, and keep 'morning'/'red' subtle
+  return esc(s).replace(/\*(.+?)\*/g,'<span class="em">$1</span>');
+}
+function renderText(sc){cap.innerHTML='';let d=0.1;
+  sc.text.forEach(b=>{const e=document.createElement('div');e.className='ln';e.style.animationDelay=d.toFixed(2)+'s';d+=0.6;
+    const p=document.createElement('p');p.className=(b.t==='big'?'big':'body');p.innerHTML=fmt(b.s);e.appendChild(p);cap.appendChild(e);});}
+function calcDwell(sc){let w=0;sc.text.forEach(b=>w+=b.s.split(/\s+/).length);return Math.max(6.5,Math.min(15,2.2+w*0.34));}
+
+/* ---------- runner ---------- */
+let idx=-1,t0=0,running=false,fin=false,auto=false,paused=false,dwell=9,prevTs=0,trans=0,toEnd=false,tipAmt=0;
+function enter(i){idx=i;const sc=SCENES[i];trans=performance.now();sc._tip=0;tipAmt=0;
+  renderText(sc);t0=performance.now();dwell=calcDwell(sc);
+  const pf=$('progfill');if(pf)pf.style.width='0%';paused=false;document.body.classList.remove('paused');
+  if(i>0)snowTap();
+  if(sc.view==='tip'){breakToWind();}
+  hint.classList.remove('hide');hint.classList.toggle('last',!!sc.last);
+  hint.textContent=auto?'\u23f8 tap to pause':(sc.last?'tap to finish':'tap');}
+function advance(){if(fin)return;if(idx>=SCENES.length-1){finish();return;}enter(idx+1);}
+function finish(){fin=true;hint.classList.add('hide');cap.innerHTML='';stopAudio();
+  setTimeout(()=>{toEnd=true;},1000);setTimeout(()=>{$('endScr').classList.remove('hide');},1900);}
+function start(a){$('titleScr').classList.add('hide');$('endScr').classList.add('hide');auto=!!a;audioInit();if(AC&&AC.state==='suspended')AC.resume();startBox();toEnd=false;fin=false;enter(0);if(!running){running=true;requestAnimationFrame(frame);}}
+function togglePause(){if(idx<0||fin||!auto)return;paused=!paused;document.body.classList.toggle('paused',paused);hint.textContent=paused?'\u25b6 tap to resume':'\u23f8 tap to pause';}
+function frame(ts){if(!running)return;const dt=ts-(prevTs||ts);prevTs=ts;
+  if(paused&&idx>=0){t0+=dt;trans+=dt;}
+  const el=(ts-t0)/1000;const sc=idx>=0?SCENES[idx]:null;
+  // tip animation on the tip spread
+  if(sc&&sc.view==='tip'){tipAmt=Math.min(1,(ts-trans)/1400);sc._tip=tipAmt*tipAmt*(3-2*tipAmt);}
+  if(auto&&!paused&&!fin&&idx>=0&&!toEnd){const pf=$('progfill');if(pf)pf.style.width=(Math.min(1,el/dwell)*100)+'%';if(el>=dwell)advance();}
+  try{
+    if(toEnd){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,rgb(COL.dawnGold));g.addColorStop(1,rgb(COL.dawnRose));ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+    else if(idx<0){drawRoom(0.1);}
+    else{paintScene(sc,ts);}
+  }catch(e){}
+  // grain
+  if(grainCv&&!toEnd){ctx.save();ctx.globalAlpha=0.04;ctx.globalCompositeOperation='overlay';const ox=reduceMotion?0:(Math.random()*130)|0,oy=reduceMotion?0:(Math.random()*130)|0;for(let y=-oy;y<H;y+=130)for(let x=-ox;x<W;x+=130)ctx.drawImage(grainCv,x,y);ctx.restore();}
+  // fade between spreads
+  if(!toEnd){const tr=Math.max(0,1-(ts-trans)/420);if(tr>0){ctx.save();ctx.globalAlpha=tr*tr;ctx.fillStyle='#100e15';ctx.fillRect(0,0,W,H);ctx.restore();}}
+  requestAnimationFrame(frame);}
+app.addEventListener('click',e=>{const id=e.target.id;if(id==='btnRead'||id==='btnAuto'||id==='replayBtn'||id==='mute')return;
+  if(!$('titleScr').classList.contains('hide'))return;if(!$('endScr').classList.contains('hide'))return;
+  if(auto)togglePause();else advance();});
+$('btnRead').addEventListener('click',e=>{e.stopPropagation();start(false);});
+$('btnAuto').addEventListener('click',e=>{e.stopPropagation();start(true);});
+$('replayBtn').addEventListener('click',e=>{e.stopPropagation();start(auto);});
+$('mute').addEventListener('click',e=>{e.stopPropagation();muted=!muted;$('mute').innerHTML=muted?'&#128263;':'&#128266;';if(master)master.gain.value=muted?0:0.8;if(boxGain)boxGain.gain.value=muted?0:0.5;if(!muted&&AC&&AC.state==='suspended')AC.resume();});
+document.addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();if(!$('titleScr').classList.contains('hide'))start(false);else if($('endScr').classList.contains('hide')){if(auto)togglePause();else advance();}}});
+resize();trans=performance.now();running=true;requestAnimationFrame(frame);
+
+</script></body></html>
